@@ -156,14 +156,10 @@ class LabJackT7(Device):
         numAddresses = len(channelnames)
         channel_ids = ljm.namesToAddresses(numAddresses, channelnames)[0]
         scansPerRead = self._buffer_scanrate // 2
-        print(
-            f"{channelnames=}, {numAddresses=}, {scansPerRead=}, {channel_ids=}",
-            file=self.log_debug,
-        )
         scanrate = ljm.eStreamStart(
             self.handle, scansPerRead, numAddresses, channel_ids, self._buffer_scanrate
         )
-        print(f"{scanrate=}", file=self.log_debug)
+        print(f"stream_worker {scanrate=}", file=self.log_debug)
         self.set_state(DevState.RUNNING)
         self._databuffer = np.nan * np.zeros((numAddresses, self._buffer_size))
         for i in range(self._buffer_size // scansPerRead):
@@ -171,9 +167,9 @@ class LabJackT7(Device):
             chunk = np.array(chunk).reshape((numAddresses, scansPerRead))
             self._databuffer[:, i * scansPerRead : (i + 1) * scansPerRead] = chunk
             if sw_backlog < 1000:
-                print(f"{sw_backlog=}, waiting.")
                 await asyncio.sleep(0.1)
 
+        print("stream_worker finished", file=self.log_debug)
         ljm.eStreamStop(self.handle)
         self.set_state(DevState.ON)
 
@@ -300,7 +296,7 @@ class LabJackT7(Device):
             # "AIN_ALL_NEGATIVE_CH": ljm.constants.GND,
         }
         self.set_params_from_dict(params)
-        await self.stream_worker()
+        asyncio.create_task(self.stream_worker())
         # PROTECTED REGION END #    //  LabJackT7.readAINbuffered
 
     def is_readAINbuffered_allowed(self):
