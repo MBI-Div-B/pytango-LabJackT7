@@ -134,6 +134,7 @@ class LabJackT7(Device):
         self._buffer_scanrate = 1000
         self._buffer_size = 10
         self._databuffer = np.zeros((4, self._buffer_size))
+        self._stop_buffer = False
         await self.connect()
 
     @command(dtype_in=int, doc_in="channel number (0-3)")
@@ -166,6 +167,8 @@ class LabJackT7(Device):
             chunk, dev_backlog, sw_backlog = ljm.eStreamRead(self.handle)
             chunk = np.array(chunk).reshape((numAddresses, scansPerRead))
             self._databuffer[:, i * scansPerRead : (i + 1) * scansPerRead] = chunk
+            if self._stop_buffer:
+                break
             if sw_backlog < 1000:
                 await asyncio.sleep(0.1)
 
@@ -180,7 +183,7 @@ class LabJackT7(Device):
     # PROTECTED REGION ID(LabJackT7.always_executed_hook) ENABLED START #
     # PROTECTED REGION END #    //  LabJackT7.always_executed_hook
 
-    async def delete_device(self):
+    def delete_device(self):
         """Hook to delete resources allocated in init_device.
 
         This method allows for any memory or other resources allocated in the
@@ -195,28 +198,28 @@ class LabJackT7(Device):
     # Attributes methods
     # ------------------
 
-    async def read_AIN0(self):
+    def read_AIN0(self):
         # PROTECTED REGION ID(LabJackT7.AIN0_read) ENABLED START #
         """Return the AIN0 attribute."""
-        return await self.read_AIN(0)
+        return self.read_AIN(0)
         # PROTECTED REGION END #    //  LabJackT7.AIN0_read
 
-    async def read_AIN1(self):
+    def read_AIN1(self):
         # PROTECTED REGION ID(LabJackT7.AIN1_read) ENABLED START #
         """Return the AIN1 attribute."""
-        return await self.read_AIN(1)
+        return self.read_AIN(1)
         # PROTECTED REGION END #    //  LabJackT7.AIN1_read
 
-    async def read_AIN2(self):
+    def read_AIN2(self):
         # PROTECTED REGION ID(LabJackT7.AIN2_read) ENABLED START #
         """Return the AIN2 attribute."""
-        return await self.read_AIN(2)
+        return self.read_AIN(2)
         # PROTECTED REGION END #    //  LabJackT7.AIN2_read
 
-    async def read_AIN3(self):
+    def read_AIN3(self):
         # PROTECTED REGION ID(LabJackT7.AIN3_read) ENABLED START #
         """Return the AIN3 attribute."""
-        return await self.read_AIN(3)
+        return self.read_AIN(3)
         # PROTECTED REGION END #    //  LabJackT7.AIN3_read
 
     def read_buffer_scanrate(self):
@@ -296,6 +299,7 @@ class LabJackT7(Device):
             # "AIN_ALL_NEGATIVE_CH": ljm.constants.GND,
         }
         self.set_params_from_dict(params)
+        self._stop_buffer = False
         asyncio.create_task(self.stream_worker())
         # PROTECTED REGION END #    //  LabJackT7.readAINbuffered
 
@@ -303,6 +307,10 @@ class LabJackT7(Device):
         # PROTECTED REGION ID(LabJackT7.is_readAINbuffered_allowed) ENABLED START #
         return self.get_state() not in [DevState.RUNNING]
         # PROTECTED REGION END #    //  LabJackT7.is_readAINbuffered_allowed
+
+    @command()
+    def stop_buffer(self):
+        self._stop_buffer = True
 
     @command(
         dtype_in="DevVarLongArray",
@@ -397,6 +405,7 @@ class LabJackT7(Device):
 
     @command()
     async def connect(self):
+        print(f"{self.connection_type=}, {self.IPaddress=}", file=self.log_debug)
         self.handle = ljm.openS("ANY", self.connection_type, self.IPaddress)
         print(f"Acquired handle {self.handle}", file=self.log_debug)
         self.set_state(DevState.ON)
