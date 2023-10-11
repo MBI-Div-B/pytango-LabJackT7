@@ -27,3 +27,4 @@ Currently, only communication via ethernet is supported. The device also offers 
 ## Device documentation
 
 * [ljm library](https://labjack.com/pages/support/?doc=/software-driver/ljm-users-guide/)
+* [LabJack on github](https://github.com/labjack)
