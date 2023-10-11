@@ -156,7 +156,7 @@ class LabJackT7(Device):
         channelnames = [f"AIN{ch}" for ch in range(4)]
         numAddresses = len(channelnames)
         channel_ids = ljm.namesToAddresses(numAddresses, channelnames)[0]
-        scansPerRead = self._buffer_scanrate // 10  # aim for 10 updates per second
+        scansPerRead = max(1, self._buffer_scanrate // 5)  # aim for 5 updates/second
         self.set_state(DevState.RUNNING)
         scanrate = ljm.eStreamStart(
             self.handle, scansPerRead, numAddresses, channel_ids, self._buffer_scanrate
