@@ -350,7 +350,7 @@ class LabJackT7(Device):
         """
             channel configuration:
             [
-              channel number (0-3),
+              channel number (1-4),
               negative channel number (1-13, 199 for GND),
               measurement range (0=``10 V``, 1=``1 V``, 2=``0.1 V``, 3=``0.01 V``),
               resolution index (0-8),
