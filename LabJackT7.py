@@ -163,7 +163,7 @@ class LabJackT7(Device):
         print(f"stream_worker {scanrate=}", file=self.log_debug)
         self.set_state(DevState.RUNNING)
         self._databuffer = np.nan * np.zeros((numAddresses, self._buffer_size))
-        for i in range(self._buffer_size // scansPerRead):
+        for i in range(np.ceil(self._buffer_size / scansPerRead)):
             chunk, dev_backlog, sw_backlog = ljm.eStreamRead(self.handle)
             chunk = np.array(chunk).reshape((numAddresses, scansPerRead))
             self._databuffer[:, i * scansPerRead : (i + 1) * scansPerRead] = chunk
