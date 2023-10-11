@@ -157,19 +157,21 @@ class LabJackT7(Device):
         numAddresses = len(channelnames)
         channel_ids = ljm.namesToAddresses(numAddresses, channelnames)[0]
         scansPerRead = self._buffer_scanrate // 2
+        self.set_state(DevState.RUNNING)
         scanrate = ljm.eStreamStart(
             self.handle, scansPerRead, numAddresses, channel_ids, self._buffer_scanrate
         )
         print(f"stream_worker {scanrate=}", file=self.log_debug)
-        self.set_state(DevState.RUNNING)
         self._databuffer = np.nan * np.zeros((numAddresses, self._buffer_size))
-        for i in range(np.ceil(self._buffer_size / scansPerRead)):
+
+        n_reads = int(np.ceil(self._buffer_size / scansPerRead))
+        for i in range(n_reads):
             chunk, dev_backlog, sw_backlog = ljm.eStreamRead(self.handle)
-            chunk = np.array(chunk).reshape((numAddresses, scansPerRead))
+            chunk = np.array(chunk).reshape((scansPerRead, numAddresses)).T
             self._databuffer[:, i * scansPerRead : (i + 1) * scansPerRead] = chunk
             if self._stop_buffer:
                 break
-            if sw_backlog < 1000:
+            if sw_backlog < scansPerRead:
                 await asyncio.sleep(0.1)
 
         print("stream_worker finished", file=self.log_debug)
