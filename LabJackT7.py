@@ -156,19 +156,18 @@ class LabJackT7(Device):
         channelnames = [f"AIN{ch}" for ch in range(4)]
         numAddresses = len(channelnames)
         channel_ids = ljm.namesToAddresses(numAddresses, channelnames)[0]
-        scansPerRead = self._buffer_scanrate // 2
+        scansPerRead = self._buffer_scanrate // 10  # aim for 10 updates per second
         self.set_state(DevState.RUNNING)
         scanrate = ljm.eStreamStart(
             self.handle, scansPerRead, numAddresses, channel_ids, self._buffer_scanrate
         )
         print(f"stream_worker {scanrate=}", file=self.log_debug)
-        self._databuffer = np.nan * np.zeros((numAddresses, self._buffer_size))
-
         n_reads = int(np.ceil(self._buffer_size / scansPerRead))
+        self._databuffer = np.nan * np.zeros((numAddresses, scansPerRead * n_reads))
         for i in range(n_reads):
             chunk, dev_backlog, sw_backlog = ljm.eStreamRead(self.handle)
             chunk = np.array(chunk).reshape((scansPerRead, numAddresses)).T
-            self._databuffer[:, i * scansPerRead : (i + 1) * scansPerRead] = chunk
+            self._databuffer[:, i * scansPerRead:(i + 1) * scansPerRead] = chunk
             if self._stop_buffer:
                 break
             if sw_backlog < scansPerRead:
@@ -259,25 +258,25 @@ class LabJackT7(Device):
     def read_arrayAIN0(self):
         # PROTECTED REGION ID(LabJackT7.arrayAIN0_read) ENABLED START #
         """Return the arrayAIN0 attribute."""
-        return self._databuffer[0]
+        return self._databuffer[0, :self._buffer_size]
         # PROTECTED REGION END #    //  LabJackT7.arrayAIN0_read
 
     def read_arrayAIN1(self):
         # PROTECTED REGION ID(LabJackT7.arrayAIN1_read) ENABLED START #
         """Return the arrayAIN1 attribute."""
-        return self._databuffer[1]
+        return self._databuffer[1, :self._buffer_size]
         # PROTECTED REGION END #    //  LabJackT7.arrayAIN1_read
 
     def read_arrayAIN2(self):
         # PROTECTED REGION ID(LabJackT7.arrayAIN2_read) ENABLED START #
         """Return the arrayAIN2 attribute."""
-        return self._databuffer[2]
+        return self._databuffer[2, :self._buffer_size]
         # PROTECTED REGION END #    //  LabJackT7.arrayAIN2_read
 
     def read_arrayAIN3(self):
         # PROTECTED REGION ID(LabJackT7.arrayAIN3_read) ENABLED START #
         """Return the arrayAIN3 attribute."""
-        return self._databuffer[3]
+        return self._databuffer[3, :self._buffer_size]
         # PROTECTED REGION END #    //  LabJackT7.arrayAIN3_read
 
     # --------
