@@ -66,11 +66,6 @@ class LabJackT7(Device):
     # Attributes
     # ----------
 
-    AIN0 = attribute(
-        dtype="DevDouble",
-        unit="V",
-    )
-
     AIN1 = attribute(
         dtype="DevDouble",
         unit="V",
@@ -86,6 +81,11 @@ class LabJackT7(Device):
         unit="V",
     )
 
+    AIN4 = attribute(
+        dtype="DevDouble",
+        unit="V",
+    )
+
     buffer_scanrate = attribute(
         dtype="DevLong",
         access=AttrWriteType.READ_WRITE,
@@ -97,12 +97,6 @@ class LabJackT7(Device):
         dtype="DevLong",
         access=AttrWriteType.READ_WRITE,
         doc="number of samples to read in buffered measurement",
-    )
-
-    arrayAIN0 = attribute(
-        dtype=("DevDouble",),
-        max_dim_x=100000,
-        unit="V",
     )
 
     arrayAIN1 = attribute(
@@ -123,6 +117,12 @@ class LabJackT7(Device):
         unit="V",
     )
 
+    arrayAIN4 = attribute(
+        dtype=("DevDouble",),
+        max_dim_x=100000,
+        unit="V",
+    )
+
     # ---------------
     # General methods
     # ---------------
@@ -137,10 +137,10 @@ class LabJackT7(Device):
         self._stop_buffer = False
         await self.connect()
 
-    @command(dtype_in=int, doc_in="channel number (0-3)")
+    @command(dtype_in=int, doc_in="channel number (1-4)")
     def read_AIN(self, channel):
-        if channel > 3:
-            raise ValueError("Allowed channels: 0-3")
+        if channel > 4:
+            raise ValueError("Allowed channels: 1-4")
         value = ljm.eReadName(self.handle, f"AIN{channel}")
         return float(value)
 
@@ -202,29 +202,29 @@ class LabJackT7(Device):
     # Attributes methods
     # ------------------
 
-    def read_AIN0(self):
-        # PROTECTED REGION ID(LabJackT7.AIN0_read) ENABLED START #
-        """Return the AIN0 attribute."""
-        return self.read_AIN(0)
-        # PROTECTED REGION END #    //  LabJackT7.AIN0_read
-
     def read_AIN1(self):
         # PROTECTED REGION ID(LabJackT7.AIN1_read) ENABLED START #
         """Return the AIN1 attribute."""
-        return self.read_AIN(1)
+        return self.read_AIN(0)
         # PROTECTED REGION END #    //  LabJackT7.AIN1_read
 
     def read_AIN2(self):
         # PROTECTED REGION ID(LabJackT7.AIN2_read) ENABLED START #
         """Return the AIN2 attribute."""
-        return self.read_AIN(2)
+        return self.read_AIN(1)
         # PROTECTED REGION END #    //  LabJackT7.AIN2_read
 
     def read_AIN3(self):
         # PROTECTED REGION ID(LabJackT7.AIN3_read) ENABLED START #
         """Return the AIN3 attribute."""
-        return self.read_AIN(3)
+        return self.read_AIN(2)
         # PROTECTED REGION END #    //  LabJackT7.AIN3_read
+
+    def read_AIN4(self):
+        # PROTECTED REGION ID(LabJackT7.AIN4_read) ENABLED START #
+        """Return the AIN4 attribute."""
+        return self.read_AIN(3)
+        # PROTECTED REGION END #    //  LabJackT7.AIN4_read
 
     def read_buffer_scanrate(self):
         # PROTECTED REGION ID(LabJackT7.buffer_scanrate_read) ENABLED START #
@@ -258,29 +258,29 @@ class LabJackT7(Device):
             return self.get_state() not in [DevState.RUNNING]
         # PROTECTED REGION END #    //  LabJackT7.is_buffer_size_allowed
 
-    def read_arrayAIN0(self):
-        # PROTECTED REGION ID(LabJackT7.arrayAIN0_read) ENABLED START #
-        """Return the arrayAIN0 attribute."""
-        return self._databuffer[0, : self._buffer_size]
-        # PROTECTED REGION END #    //  LabJackT7.arrayAIN0_read
-
     def read_arrayAIN1(self):
         # PROTECTED REGION ID(LabJackT7.arrayAIN1_read) ENABLED START #
         """Return the arrayAIN1 attribute."""
-        return self._databuffer[1, : self._buffer_size]
+        return self._databuffer[0, : self._buffer_size]
         # PROTECTED REGION END #    //  LabJackT7.arrayAIN1_read
 
     def read_arrayAIN2(self):
         # PROTECTED REGION ID(LabJackT7.arrayAIN2_read) ENABLED START #
         """Return the arrayAIN2 attribute."""
-        return self._databuffer[2, : self._buffer_size]
+        return self._databuffer[1, : self._buffer_size]
         # PROTECTED REGION END #    //  LabJackT7.arrayAIN2_read
 
     def read_arrayAIN3(self):
         # PROTECTED REGION ID(LabJackT7.arrayAIN3_read) ENABLED START #
         """Return the arrayAIN3 attribute."""
-        return self._databuffer[3, : self._buffer_size]
+        return self._databuffer[2, : self._buffer_size]
         # PROTECTED REGION END #    //  LabJackT7.arrayAIN3_read
+
+    def read_arrayAIN4(self):
+        # PROTECTED REGION ID(LabJackT7.arrayAIN4_read) ENABLED START #
+        """Return the arrayAIN4 attribute."""
+        return self._databuffer[3, : self._buffer_size]
+        # PROTECTED REGION END #    //  LabJackT7.arrayAIN4_read
 
     # --------
     # Commands
